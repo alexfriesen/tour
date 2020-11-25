@@ -1,0 +1,28 @@
+<div class="loader" *ngIf="loading$ | async">
+  <mat-spinner></mat-spinner>
+</div>
+
+<mat-toolbar class="toolbar">
+
+  <h1>{{ (tour$ | async)?.headline }}</h1>
+
+  <div>
+    <mat-form-field>
+      <mat-label>Floor</mat-label>
+      <mat-select (selectionChange)="onFloorSelected($event)">
+        <mat-option *ngFor="let floor of floors$ | async" [value]="floor.id">{{ getTagLabel(floor.tag) }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+
+    <mat-form-field>
+      <mat-label>Rooms</mat-label>
+      <mat-select (selectionChange)="onRoomSelected($event)">
+        <mat-option *ngFor="let room of rooms$ | async" [value]="room.id">{{ getTagLabel(room.tag) }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+</mat-toolbar>
+
+<app-panorama [room]="selectedRoom"></app-panorama>
