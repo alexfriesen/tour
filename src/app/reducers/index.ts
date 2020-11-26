@@ -3,6 +3,7 @@ import { createReducer, createSelector, on } from '@ngrx/store';
 import { loadDataAction, loadDataSuccessAction } from '../actions/data.actions';
 import { addFloorAction } from '../actions/floor.actions';
 import { addRoomAction } from '../actions/room.actions';
+import { selectionChangeAction } from '../actions/selection.actions';
 import { addTagAction } from '../actions/tags.actions';
 import { AddTourInfoAction } from '../actions/tour.actions';
 import { addViewsettingAction } from '../actions/viewsettings.actions';
@@ -15,6 +16,11 @@ import { Viewsettings } from '../model/viewsettings.interface';
 export interface AppState {
   loading: boolean;
 
+  selection: {
+    floorId: string,
+    roomId: string,
+  };
+
   tour: Partial<Tour> | undefined;
   floors: Floor[];
   rooms: Room[];
@@ -25,6 +31,11 @@ export interface AppState {
 
 const initalState: AppState = {
   loading: false,
+
+  selection: {
+    floorId: '',
+    roomId: '',
+  },
 
   tour: undefined,
   floors: [],
@@ -87,6 +98,13 @@ export const reducers = {
       };
     }),
 
+    on(selectionChangeAction, (state, { floorId, roomId }) => {
+      return {
+        ...state,
+        selection: { ...state.selection, floorId, roomId },
+      };
+    }),
+
   )
 };
 
@@ -104,4 +122,16 @@ export const selectRoomsByFloorId = createSelector(selectAppState, (state: AppSt
 
 export const selectRoomById = createSelector(selectAppState, (state: AppState, props: { id: string }) => {
   return state.rooms.find(item => item.id === props.id);
+});
+
+export const getSelectedFloor = createSelector(selectAppState, (state: AppState) => {
+  return state.floors.find(item => item.id === state.selection.floorId);
+});
+
+export const selectRoomsForSelectedFloor = createSelector(selectAppState, (state: AppState) => {
+  return state.rooms.filter(item => item.tour_floor_id === state.selection.floorId);
+});
+
+export const getSelectedRoom = createSelector(selectAppState, (state: AppState) => {
+  return state.rooms.find(item => item.id === state.selection.roomId);
 });

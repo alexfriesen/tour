@@ -12,7 +12,7 @@ export class PanoramaComponent implements OnDestroy {
   container!: ElementRef;
 
   @Input()
-  set room(room: Room | undefined) {
+  set room(room: Room | null | undefined) {
     if (!room) return;
 
     const src = room.positions[0].panos[0].file.absolute_path_url;
