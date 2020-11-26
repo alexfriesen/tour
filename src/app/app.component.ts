@@ -4,7 +4,7 @@ import { Store } from '@ngrx/store';
 
 import { Tag } from './model/tag.interface';
 import { loadDataAction } from './actions/data.actions';
-import { selectionChangeAction } from './actions/selection.actions';
+import { changeSelectionAction } from './actions/selection.actions';
 import { AppState, selectLoading, selectTour, selectFloors, getSelectedRoom, selectRoomsForSelectedFloor } from './reducers';
 
 @Component({
@@ -36,7 +36,7 @@ export class AppComponent {
     // this.form.valueChanges.pipe(
     //   map(value => this.store.dispatch(selectionChangeAction(value)))
     // )
-    this.form.valueChanges.subscribe(value => this.store.dispatch(selectionChangeAction(value)));
+    this.form.valueChanges.subscribe(value => this.store.dispatch(changeSelectionAction(value)));
   }
 
   getTagLabel(tag: Tag): string {

@@ -1,3 +1,3 @@
 import { createAction, props } from '@ngrx/store';
 
-export const selectionChangeAction = createAction('[SELECTION] change', props<{ floorId: string, roomId: string }>());
+export const changeSelectionAction = createAction('[SELECTION] change', props<{ floorId: string, roomId: string }>());

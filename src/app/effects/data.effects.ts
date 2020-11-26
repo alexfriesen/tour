@@ -7,7 +7,8 @@ import { loadDataAction, loadDataFailAction, loadDataSuccessAction } from '../ac
 import { addFloorAction } from '../actions/floor.actions';
 import { addRoomAction } from '../actions/room.actions';
 import { addTagAction } from '../actions/tags.actions';
-import { AddTourInfoAction } from '../actions/tour.actions';
+import { addTourInfoAction } from '../actions/tour.actions';
+import { changeSelectionAction } from '../actions/selection.actions';
 import { DataService } from '../services/data.service';
 
 const nonTourInfo = ['rooms', 'floors', 'viewsettings', 'tags'];
@@ -25,6 +26,13 @@ export class DataEffects {
     )
   );
 
+  loadSelection$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(loadDataSuccessAction),
+      map(({ payload }) => changeSelectionAction({ roomId: payload.start_tour_room_id, floorId: payload.start_tour_position_id })),
+    )
+  );
+
   loadTour$ = createEffect(() =>
     this.actions$.pipe(
       ofType(loadDataSuccessAction),
@@ -32,7 +40,7 @@ export class DataEffects {
         return of(Object.keys(payload)).pipe(
           switchMap(keys => keys),
           filter(key => !nonTourInfo.includes(key)),
-          map(key => AddTourInfoAction({ key, data: payload[key] }))
+          map(key => addTourInfoAction({ key, data: payload[key] }))
         );
       }),
     )

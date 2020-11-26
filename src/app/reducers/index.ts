@@ -3,9 +3,9 @@ import { createReducer, createSelector, on } from '@ngrx/store';
 import { loadDataAction, loadDataSuccessAction } from '../actions/data.actions';
 import { addFloorAction } from '../actions/floor.actions';
 import { addRoomAction } from '../actions/room.actions';
-import { selectionChangeAction } from '../actions/selection.actions';
+import { changeSelectionAction } from '../actions/selection.actions';
 import { addTagAction } from '../actions/tags.actions';
-import { AddTourInfoAction } from '../actions/tour.actions';
+import { addTourInfoAction } from '../actions/tour.actions';
 import { addViewsettingAction } from '../actions/viewsettings.actions';
 import { Floor } from '../model/floor.interface';
 import { Room } from '../model/room.interface';
@@ -60,7 +60,7 @@ export const reducers = {
       };
     }),
 
-    on(AddTourInfoAction, (state, { key, data }) => {
+    on(addTourInfoAction, (state, { key, data }) => {
       return {
         ...state,
         tour: {
@@ -98,7 +98,7 @@ export const reducers = {
       };
     }),
 
-    on(selectionChangeAction, (state, { floorId, roomId }) => {
+    on(changeSelectionAction, (state, { floorId, roomId }) => {
       return {
         ...state,
         selection: { ...state.selection, floorId, roomId },
