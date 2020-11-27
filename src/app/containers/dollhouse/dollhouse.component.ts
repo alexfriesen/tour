@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
-import { AmbientLight, BoxGeometry, Color, DirectionalLight, Material, MathUtils, Mesh, MeshBasicMaterial, MeshPhongMaterial, PerspectiveCamera, PlaneGeometry, Quaternion, Scene, SphereBufferGeometry, Vector3, WebGLRenderer } from 'three';
+import { BoxGeometry, Color, DirectionalLight, HemisphereLight, MathUtils, Mesh, MeshBasicMaterial, MeshPhongMaterial, PerspectiveCamera, PlaneGeometry, Raycaster, Scene, SphereGeometry, Vector2, Vector3, WebGLRenderer } from 'three';
 
 @Component({
   selector: 'app-container-dollhouse',
@@ -16,13 +16,19 @@ export class DollhouseComponent implements AfterViewInit, OnDestroy {
   private scene: Scene;
   private camera: PerspectiveCamera;
   private renderer: WebGLRenderer;
+  private raycaster = new Raycaster();
+  private indicator: Mesh;
+
+  private mousePosition = new Vector2();
+
+  private walls: Mesh[] = [];
 
   private isUserInteracting = false;
   private onPointerDownMouseX = 0;
   private onPointerDownMouseY = 0;
 
-  private lon = -181;
-  private lat = -46;
+  private lon = 0;
+  private lat = 0;
   private phi = 0;
   private theta = 0;
 
@@ -31,14 +37,16 @@ export class DollhouseComponent implements AfterViewInit, OnDestroy {
 
   constructor() {
     this.scene = new Scene();
-    this.scene.background = new Color(0xcce0ff);
+    this.scene.background = new Color(0xbfe3dd);
 
-    this.camera = new PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 1100);
-    this.camera.position.set(10, 10, 0);
+    this.camera = new PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1100);
+    this.camera.position.set(0, .5, 0);
     this.camera.lookAt(0, 0, 0);
 
     this.renderer = new WebGLRenderer({ antialias: true });
     this.renderer.shadowMap.enabled = true;
+
+    this.indicator = this.createIndicator();
   }
 
   ngAfterViewInit(): void {
@@ -52,24 +60,30 @@ export class DollhouseComponent implements AfterViewInit, OnDestroy {
   private init(): void {
     const container = this.container.nativeElement;
 
+    this.scene.add(this.indicator);
+
     this.scene.add(this.createFloor());
 
-    this.scene.add(this.createWall(new Vector3(2, 0, 0), new Vector3(0, MathUtils.degToRad(90), 0)));
-    this.scene.add(this.createWall(new Vector3(0, 0, 2), new Vector3(0, 0, 0)));
-    this.scene.add(this.createWall(new Vector3(-2, 0, 0), new Vector3(0, MathUtils.degToRad(90), 0)));
-    this.scene.add(this.createWall(new Vector3(0, 0, -2), new Vector3(0, 0, 0)));
+    const rotationA = new Vector3(0, 0, 0);
+    const rotationB = new Vector3(0, MathUtils.degToRad(90), 0);
 
-    this.scene.add(new AmbientLight(0x666666));
+    this.walls = [
+      this.createWall(new Vector3(2, 0, -0.1), rotationB),
+      this.createWall(new Vector3(0.1, 0, 2), rotationA),
+      this.createWall(new Vector3(-2, 0, 0.1), rotationB),
+      this.createWall(new Vector3(-0.1, 0, -2), rotationA),
+    ];
+    this.scene.add(...this.walls);
 
-    const dirLight = new DirectionalLight(0x666666);
-    dirLight.position.set(3, 10, 0);
+    this.scene.add(new HemisphereLight(0xffffff, 0xffffff, 0.4));
+
+    const dirLight = new DirectionalLight(0xffffff, 1);
+    dirLight.color.setHSL(0.1, 1, 0.95);
+    dirLight.position.set(-1, 1.75, 1);
+    dirLight.position.multiplyScalar(30);
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
     dirLight.castShadow = true;
-    dirLight.shadow.camera.top = 2;
-    dirLight.shadow.camera.bottom = - 2;
-    dirLight.shadow.camera.left = - 2;
-    dirLight.shadow.camera.right = 2;
-    dirLight.shadow.camera.near = 0.1;
-    dirLight.shadow.camera.far = 40;
     this.scene.add(dirLight);
 
     this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -79,7 +93,7 @@ export class DollhouseComponent implements AfterViewInit, OnDestroy {
     container.style.touchAction = 'none';
 
     document.addEventListener('pointerdown', this.onPointerDown.bind(this), false);
-    document.addEventListener('wheel', this.onDocumentMouseWheel.bind(this), false);
+    // document.addEventListener('wheel', this.onDocumentMouseWheel.bind(this), false);
     window.addEventListener('resize', this.onWindowResize.bind(this), false);
 
     this.initialized = true;
@@ -87,10 +101,8 @@ export class DollhouseComponent implements AfterViewInit, OnDestroy {
   }
 
   private createWall(position: Vector3, rotation: Vector3) {
-    const geometry = new BoxGeometry(4, 1, .2);
-    // invert the geometry on the x-axis so that all of the faces point inward
+    const geometry = new BoxGeometry(4, 2, .2);
     geometry.scale(1, 1, 1);
-    geometry
 
     const material = new MeshPhongMaterial({ color: new Color('white') });
 
@@ -105,7 +117,6 @@ export class DollhouseComponent implements AfterViewInit, OnDestroy {
 
   private createFloor() {
     const geometry = new PlaneGeometry(4, 4, 1);
-    // invert the geometry on the x-axis so that all of the faces point inward
     geometry.scale(1, 1, 1);
 
     const material = new MeshPhongMaterial({ color: new Color('white') });
@@ -115,6 +126,17 @@ export class DollhouseComponent implements AfterViewInit, OnDestroy {
     mesh.rotateX(MathUtils.degToRad(-90));
     mesh.castShadow = true;
     mesh.receiveShadow = true;
+
+    return mesh;
+  }
+
+  private createIndicator() {
+    const geometry = new SphereGeometry();
+    geometry.scale(.1, .1, .1);
+
+    const material = new MeshBasicMaterial({ color: new Color('skyblue') });
+
+    const mesh = new Mesh(geometry, material);
 
     return mesh;
   }
@@ -144,13 +166,13 @@ export class DollhouseComponent implements AfterViewInit, OnDestroy {
   }
 
   private onPointerMove(event: PointerEvent): void {
+    this.mousePosition.x = (event.clientX / window.innerWidth) * 2 - 1;
+    this.mousePosition.y = - (event.clientY / window.innerHeight) * 2 + 1;
+
     if (event.isPrimary === false || !this.isUserInteracting) return;
 
     this.lon = (this.onPointerDownMouseX - event.clientX) * 0.1 + this.onPointerDownLon;
     this.lat = (event.clientY - this.onPointerDownMouseY) * 0.1 + this.onPointerDownLat;
-
-    console.log(this.lon, this.lat)
-
   }
 
   private onPointerUp(event: PointerEvent): void {
@@ -182,9 +204,15 @@ export class DollhouseComponent implements AfterViewInit, OnDestroy {
 
   private update(): void {
 
-    // if (this.isUserInteracting === false) {
-    //   this.lon += 0.01;
-    // }
+    this.raycaster.setFromCamera(this.mousePosition, this.camera);
+    const intersects = this.raycaster.intersectObjects(this.walls, false);
+
+    for (const intersect of intersects) {
+      if (intersect && intersect.face) {
+        const hitpoint = intersect.point.clone();
+        this.indicator.position.set(hitpoint.x, hitpoint.y, hitpoint.z);
+      }
+    }
 
     this.lat = Math.max(- 85, Math.min(85, this.lat));
     this.phi = MathUtils.degToRad(90 - this.lat);
