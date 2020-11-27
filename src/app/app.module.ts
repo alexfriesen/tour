@@ -12,8 +12,9 @@ import { AppComponent } from './app.component';
 import { reducers } from './reducers';
 import { effects } from './effects';
 import { DataService } from './services/data.service';
-import { PanoramaComponent } from './panorama.component';
+import { PanoramaComponent } from './components/panorama/panorama.component';
 import { envModules } from 'src/environments/modules';
+import { TourComponent } from './containers/tour/tour.component';
 
 @NgModule({
   imports: [
@@ -35,6 +36,7 @@ import { envModules } from 'src/environments/modules';
   ],
   declarations: [
     AppComponent,
+    TourComponent,
     PanoramaComponent,
   ],
   bootstrap: [AppComponent]

@@ -1,42 +1,28 @@
-import { Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
-import { MathUtils, Mesh, MeshBasicMaterial, PerspectiveCamera, Scene, SphereBufferGeometry, Texture, TextureLoader, WebGLRenderer } from 'three';
-import { Room } from './model/room.interface';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { AmbientLight, BoxGeometry, Color, DirectionalLight, Material, MathUtils, Mesh, MeshBasicMaterial, MeshPhongMaterial, PerspectiveCamera, PlaneGeometry, Quaternion, Scene, SphereBufferGeometry, Vector3, WebGLRenderer } from 'three';
 
 @Component({
-  selector: 'app-panorama',
-  templateUrl: './panorama.component.html',
-  styleUrls: ['./panorama.component.scss'],
+  selector: 'app-container-dollhouse',
+  templateUrl: './dollhouse.component.html',
+  styleUrls: ['./dollhouse.component.scss']
 })
-export class PanoramaComponent implements OnDestroy {
+export class DollhouseComponent implements AfterViewInit, OnDestroy {
+
   @ViewChild('container')
   container!: ElementRef;
-
-  @Input()
-  set room(room: Room | null | undefined) {
-    if (!room) return;
-
-    const src = room.positions[0].panos[0].file.absolute_path_url;
-
-    if (!this.initialized) {
-      this.init(src);
-    } else {
-      this.setImageSource(src);
-    }
-  }
 
   initialized = false;
 
   private scene: Scene;
   private camera: PerspectiveCamera;
   private renderer: WebGLRenderer;
-  private material!: MeshBasicMaterial;
 
   private isUserInteracting = false;
   private onPointerDownMouseX = 0;
   private onPointerDownMouseY = 0;
 
-  private lon = 0;
-  private lat = 0;
+  private lon = -181;
+  private lat = -46;
   private phi = 0;
   private theta = 0;
 
@@ -44,38 +30,47 @@ export class PanoramaComponent implements OnDestroy {
   private onPointerDownLon = 0;
 
   constructor() {
-    this.camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1100);
     this.scene = new Scene();
-    this.renderer = new WebGLRenderer();
+    this.scene.background = new Color(0xcce0ff);
+
+    this.camera = new PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 1100);
+    this.camera.position.set(10, 10, 0);
+    this.camera.lookAt(0, 0, 0);
+
+    this.renderer = new WebGLRenderer({ antialias: true });
+    this.renderer.shadowMap.enabled = true;
+  }
+
+  ngAfterViewInit(): void {
+    this.init();
   }
 
   ngOnDestroy(): void {
     this.cleanup();
   }
 
-  private async setImageSource(src: string): Promise<void> {
-    if (this.material) {
-
-      const texture = await this.fetchTexture(src);
-      texture.needsUpdate = true;
-
-      this.material.map = texture;
-    }
-  }
-
-  private async init(src: string): Promise<void> {
+  private init(): void {
     const container = this.container.nativeElement;
 
-    const geometry = new SphereBufferGeometry(500, 60, 40);
-    // invert the geometry on the x-axis so that all of the faces point inward
-    geometry.scale(- 1, 1, 1);
+    this.scene.add(this.createFloor());
 
-    const texture = await this.fetchTexture(src);
-    this.material = new MeshBasicMaterial({ map: texture });
+    this.scene.add(this.createWall(new Vector3(2, 0, 0), new Vector3(0, MathUtils.degToRad(90), 0)));
+    this.scene.add(this.createWall(new Vector3(0, 0, 2), new Vector3(0, 0, 0)));
+    this.scene.add(this.createWall(new Vector3(-2, 0, 0), new Vector3(0, MathUtils.degToRad(90), 0)));
+    this.scene.add(this.createWall(new Vector3(0, 0, -2), new Vector3(0, 0, 0)));
 
-    const mesh = new Mesh(geometry, this.material);
+    this.scene.add(new AmbientLight(0x666666));
 
-    this.scene.add(mesh);
+    const dirLight = new DirectionalLight(0x666666);
+    dirLight.position.set(3, 10, 0);
+    dirLight.castShadow = true;
+    dirLight.shadow.camera.top = 2;
+    dirLight.shadow.camera.bottom = - 2;
+    dirLight.shadow.camera.left = - 2;
+    dirLight.shadow.camera.right = 2;
+    dirLight.shadow.camera.near = 0.1;
+    dirLight.shadow.camera.far = 40;
+    this.scene.add(dirLight);
 
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -89,6 +84,39 @@ export class PanoramaComponent implements OnDestroy {
 
     this.initialized = true;
     this.animate();
+  }
+
+  private createWall(position: Vector3, rotation: Vector3) {
+    const geometry = new BoxGeometry(4, 1, .2);
+    // invert the geometry on the x-axis so that all of the faces point inward
+    geometry.scale(1, 1, 1);
+    geometry
+
+    const material = new MeshPhongMaterial({ color: new Color('white') });
+
+    const mesh = new Mesh(geometry, material);
+    mesh.position.add(position);
+    mesh.rotation.setFromVector3(rotation);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+
+    return mesh;
+  }
+
+  private createFloor() {
+    const geometry = new PlaneGeometry(4, 4, 1);
+    // invert the geometry on the x-axis so that all of the faces point inward
+    geometry.scale(1, 1, 1);
+
+    const material = new MeshPhongMaterial({ color: new Color('white') });
+
+    const mesh = new Mesh(geometry, material);
+    mesh.position.set(0, -0.5, 0);
+    mesh.rotateX(MathUtils.degToRad(-90));
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+
+    return mesh;
   }
 
   private onWindowResize(): void {
@@ -121,6 +149,8 @@ export class PanoramaComponent implements OnDestroy {
     this.lon = (this.onPointerDownMouseX - event.clientX) * 0.1 + this.onPointerDownLon;
     this.lat = (event.clientY - this.onPointerDownMouseY) * 0.1 + this.onPointerDownLat;
 
+    console.log(this.lon, this.lat)
+
   }
 
   private onPointerUp(event: PointerEvent): void {
@@ -152,9 +182,9 @@ export class PanoramaComponent implements OnDestroy {
 
   private update(): void {
 
-    if (this.isUserInteracting === false) {
-      this.lon += 0.01;
-    }
+    // if (this.isUserInteracting === false) {
+    //   this.lon += 0.01;
+    // }
 
     this.lat = Math.max(- 85, Math.min(85, this.lat));
     this.phi = MathUtils.degToRad(90 - this.lat);
@@ -181,11 +211,4 @@ export class PanoramaComponent implements OnDestroy {
 
   }
 
-  private async fetchTexture(src: string): Promise<Texture> {
-    const loader = new TextureLoader();
-
-    const texture = await loader.loadAsync(src);
-
-    return texture;
-  }
 }

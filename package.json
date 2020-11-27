@@ -5,11 +5,12 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "ng build --stats-json",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "deploy": "ng deploy --cname=tour.alexfriesen.net"
+    "deploy": "ng deploy --cname=tour.alexfriesen.net",
+    "analyze": "webpack-bundle-analyzer dist/tour/stats.json"
   },
   "private": true,
   "dependencies": {
@@ -37,7 +38,7 @@
     "@angular/compiler-cli": "~11.0.0",
     "@ngrx/store-devtools": "^10.0.1",
     "@types/jasmine": "~3.6.0",
-    "@types/node": "^12.11.1",
+    "@types/node": "^14.14.10",
     "angular-cli-ghpages": "^1.0.0-rc.1",
     "codelyzer": "^6.0.0",
     "jasmine-core": "~3.6.0",
@@ -50,6 +51,7 @@
     "protractor": "~7.0.0",
     "ts-node": "~8.3.0",
     "tslint": "~6.1.0",
-    "typescript": "~4.0.2"
+    "typescript": "~4.0.2",
+    "webpack-bundle-analyzer": "^4.1.0"
   }
 }
