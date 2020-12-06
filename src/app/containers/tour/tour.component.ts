@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 
-import { Tag } from '../../model/tag.interface';
 import { loadDataAction } from '../../actions/data.actions';
 import { changeSelectionAction } from '../../actions/selection.actions';
 import { AppState, selectLoading, selectTour, selectFloors, getSelectedRoom, selectRoomsForSelectedFloor } from '../../reducers';
@@ -37,14 +36,6 @@ export class TourComponent {
     //   map(value => this.store.dispatch(selectionChangeAction(value)))
     // )
     this.form.valueChanges.subscribe(value => this.store.dispatch(changeSelectionAction(value)));
-  }
-
-  getTagLabel(tag: Tag): string {
-    if (tag.de_DE) {
-      return tag.de_DE;
-    }
-
-    return tag[tag.fallback_language];
   }
 
 }

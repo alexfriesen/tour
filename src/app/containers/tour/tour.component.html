@@ -10,7 +10,9 @@
     <mat-form-field>
       <mat-label>Floor</mat-label>
       <mat-select formControlName="floorId">
-        <mat-option *ngFor="let floor of floors$ | async" [value]="floor.id">{{ getTagLabel(floor.tag) }}</mat-option>
+        <mat-option *ngFor="let floor of floors$ | async" [value]="floor.id">
+          {{ floor.tag | tagLabel }}
+        </mat-option>
       </mat-select>
     </mat-form-field>
 
@@ -18,7 +20,9 @@
     <mat-form-field>
       <mat-label>Rooms</mat-label>
       <mat-select formControlName="roomId">
-        <mat-option *ngFor="let room of rooms$ | async" [value]="room.id">{{ getTagLabel(room.tag) }}</mat-option>
+        <mat-option *ngFor="let room of rooms$ | async" [value]="room.id">
+          {{ room.tag | tagLabel }}
+        </mat-option>
       </mat-select>
     </mat-form-field>
   </form>

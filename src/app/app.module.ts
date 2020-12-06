@@ -15,6 +15,7 @@ import { DataService } from './services/data.service';
 import { PanoramaComponent } from './components/panorama/panorama.component';
 import { envModules } from 'src/environments/modules';
 import { TourComponent } from './containers/tour/tour.component';
+import { PipesModule } from './pipes/pipes.module';
 
 @NgModule({
   imports: [
@@ -27,6 +28,7 @@ import { TourComponent } from './containers/tour/tour.component';
 
     StoreModule.forRoot(reducers),
     EffectsModule.forRoot(effects),
+    PipesModule,
 
     // contains env specific tools like ngrx debug
     envModules
